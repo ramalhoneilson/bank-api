@@ -1,0 +1,9 @@
+### Transfer funds from an administrative account to a customer account
+POST http://0.0.0.0:8000/api/v1/transactions/transfer
+Content-Type: application/json
+
+{
+  "amount": 1000.00,
+  "source_account_id": 1,  
+  "destination_account_id": 2  
+}

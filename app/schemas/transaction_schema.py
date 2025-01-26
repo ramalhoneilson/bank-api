@@ -1,11 +1,12 @@
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
+from app.models.transaction import TransactionType
 
 
 class TransactionBase(BaseModel):
     amount: float
-    transaction_type: str
+    transaction_type: TransactionType
     source_account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
 

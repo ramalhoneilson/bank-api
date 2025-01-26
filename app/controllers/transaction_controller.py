@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 @router.post("/transactions/deposit", response_model=TransactionResponse)
 def deposit_funds(deposit_data: DepositCreate, db: Session = Depends(get_db)):
     """
-    Deposit funds into an account.
+    Deposit funds into an account. Deposits always move money from an administrative account to a user account.
     """
     try:
         logger.info(f"Processing deposit: {deposit_data}")
@@ -37,17 +37,16 @@ def deposit_funds(deposit_data: DepositCreate, db: Session = Depends(get_db)):
         account_service = BankAccountService(BankAccountDAO())
         transaction_service = TransactionService(account_service, transaction_dao)
 
-        transaction = transaction_service.create_transaction(
+        transaction = transaction_service.create_deposit_transaction(
             db,
             amount=deposit_data.amount,
-            transaction_type=TransactionType.DEPOSIT,
             destination_account_id=deposit_data.account_id,
         )
 
         return TransactionResponse(
             id=transaction.id,
             amount=float(transaction.amount),
-            transaction_type=transaction.transaction_type.value,  # Access enum value
+            transaction_type=transaction.transaction_type.value,
             source_account_id=transaction.source_account_id,
             destination_account_id=transaction.destination_account_id,
             timestamp=transaction.timestamp,
@@ -78,7 +77,6 @@ def withdraw_funds(withdraw_data: WithdrawCreate, db: Session = Depends(get_db))
         transaction = transaction_service.create_transaction(
             db,
             amount=withdraw_data.amount,
-            transaction_type=TransactionType.WITHDRAW,
             source_account_id=withdraw_data.account_id,
         )
 
@@ -116,10 +114,9 @@ def transfer_funds(transfer_data: TransferCreate, db: Session = Depends(get_db))
         account_service = BankAccountService(BankAccountDAO())
         transaction_service = TransactionService(account_service, transaction_dao)
 
-        transaction = transaction_service.create_transaction(
+        transaction = transaction_service.create_transfer(
             db,
             amount=transfer_data.amount,
-            transaction_type=TransactionType.TRANSFER,
             source_account_id=transfer_data.source_account_id,
             destination_account_id=transfer_data.destination_account_id,
         )
