@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database.session import get_db
@@ -133,4 +134,32 @@ def transfer_funds(transfer_data: TransferCreate, db: Session = Depends(get_db))
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error during transfer: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# list transactions for a given account
+@router.get("/transactions/{account_id}", response_model=List[TransactionResponse])
+def get_transactions(account_id: int, db: Session = Depends(get_db)):
+    """
+    Fetch all transactions for a given account.
+    """
+    try:
+        logger.info(f"Fetching transactions for account: {account_id}")
+        transaction_dao = TransactionDAO()
+        transactions = transaction_dao.get_transactions_by_account_id(db, account_id)
+
+        return [
+            TransactionResponse(
+                id=transaction.id,
+                amount=float(transaction.amount),
+                transaction_type=transaction.transaction_type.value,
+                source_account_id=transaction.source_account_id,
+                destination_account_id=transaction.destination_account_id,
+                timestamp=transaction.timestamp,
+            )
+            for transaction in transactions
+        ]
+
+    except Exception as e:
+        logger.error(f"Unexpected error fetching transactions: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")

@@ -1,8 +1,10 @@
 from decimal import Decimal
+from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.models.bank_account import BankAccount
 from app.models.transaction import Transaction, TransactionType
+from app.schemas.transaction_schema import TransactionResponse
 from app.utils.exceptions import InsufficientFundsError, AccountNotFoundError
 from app.dao.transaction_dao import TransactionDAO
 from app.services.bank_account_service import BankAccountService
@@ -181,3 +183,8 @@ class TransactionService:
         Fetch a transaction by its ID.
         """
         return self.transaction_dao.get_transaction_by_id(db, transaction_id)
+
+    def list_transactions(self, db: Session, account_id: int) -> List[TransactionResponse]:
+        account = self.account_dao.get_account_by_id(db, account_id)
+        transactions = account.transactions
+        return [TransactionResponse.model_validate(transaction) for transaction in transactions]

@@ -43,4 +43,4 @@ Content-Type: application/json
 GET http://0.0.0.0:8000/api/v1/transactions
 
 ### 5. Get Transaction by ID (Optional - If you have an endpoint for this)
-GET http://0.0.0.0:8000/api/v1/transactions/1  # Replace with a valid transaction ID
+GET http://0.0.0.0:8000/api/v1/transactions/1

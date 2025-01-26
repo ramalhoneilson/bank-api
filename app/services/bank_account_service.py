@@ -32,5 +32,3 @@ class BankAccountService:
     def get_account_by_id(self, db: Session, account_id: int) -> BankAccountResponse:
         account = self.account_dao.get_account_by_id(db, account_id)
         return BankAccountResponse.model_validate(account)
-    
-
