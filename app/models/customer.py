@@ -5,7 +5,6 @@ from sqlalchemy.orm import relationship
 
 class Customer(Base):
     __tablename__ = "customers"
-
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    name = Column(String, nullable=False)
-    accounts = relationship("Account", back_populates="customer")
+    customer_name = Column(String, nullable=False)
+    bank_accounts = relationship("BankAccount", back_populates="customer")

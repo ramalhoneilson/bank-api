@@ -1,16 +1,16 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
-class CustomerCreate(BaseModel):
-    name: str = Field(..., description="Customer name")
-
-    class Config:
-        from_attributes = True
+class CustomerBase(BaseModel):
+    customer_name: str
 
 
-class CustomerResponse(BaseModel):
+class CustomerCreate(CustomerBase):
+    pass
+
+
+class CustomerResponse(CustomerBase):
     id: int
-    name: str
 
     class Config:
         from_attributes = True

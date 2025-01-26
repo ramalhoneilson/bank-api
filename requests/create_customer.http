@@ -3,7 +3,7 @@ POST http://0.0.0.0:8000/api/v1/customers
 Content-Type: application/json
 
 {
-  "name": "John Doe"
+  "customer_name": "Carlos Doe"
 }
 
 ### Get a customer by ID

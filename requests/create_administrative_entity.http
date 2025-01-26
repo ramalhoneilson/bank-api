@@ -1,0 +1,12 @@
+### Create a administrative Entity (e.g., SYSTEM)
+POST http://0.0.0.0:8000/api/v1/administrative_entity
+Content-Type: application/json
+
+{
+  "coorporate_name": "SYSTEM 3",
+  "tax_id": "SYSTEM_TAX_ID 3"
+}
+
+
+### List all administrative entities
+GET http://0.0.0.0:8000/api/v1/administrative-entities

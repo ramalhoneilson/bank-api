@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def create_customer(customer_data: CustomerCreate, db: Session = Depends(get_db)):
     """
     Create a new customer
-    - customer name
+    - customer_name
     """
     try:
         customer_dao = CustomerDAO()
