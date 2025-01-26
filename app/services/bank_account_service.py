@@ -1,16 +1,15 @@
+from typing import List
 from sqlalchemy.orm import Session
 from app.dao.bank_account_dao import BankAccountDAO
 from app.schemas.bank_account_schema import BankAccountCreate, BankAccountResponse
 from app.models.bank_account import BankAccount, AccountType
 
 
-class CustomerAccountService:
+class BankAccountService:
     def __init__(self, account_dao: BankAccountDAO):
         self.account_dao = account_dao
 
-    def create_new_account(
-        self, db: Session, account_data: BankAccountCreate
-    ) -> BankAccountResponse:
+    def create_new_account(self, db: Session, account_data: BankAccountCreate) -> BankAccountResponse:
         # TODO: validation
 
         created_account = self.account_dao.create_account(db, account_data)
@@ -26,5 +25,8 @@ class CustomerAccountService:
             db, account_name, AccountType.ADMINISTRATIVE
         )
     
+    def get_all_accounts(self, db: Session) -> List[BankAccountResponse]:
+        accounts = self.account_dao.get_all_accounts(db)
+        return [BankAccountResponse.model_validate(account) for account in accounts]
     
 

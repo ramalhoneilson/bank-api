@@ -1,11 +1,9 @@
 from pydantic import BaseModel
-from datetime import datetime
-
+from app.models.bank_account import AccountType
 
 class BankAccountCreate(BaseModel):
-    account_number: str
     balance: float
-    account_type: str
+    account_type: AccountType
     status: str
     owner_id: int
 
@@ -17,10 +15,8 @@ class BankAccountResponse(BaseModel):
     id: int
     account_number: str
     balance: float
-    account_type: str
+    account_type: AccountType
     status: str
-    owner_id: int
-    created_at: datetime
 
     class Config:
         from_attributes = True

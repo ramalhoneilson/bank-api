@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database.session import get_db
-from app.services.customer_account_service import CustomerAccountService
+from app.services.bank_account_service import BankAccountService
 from app.dao.bank_account_dao import BankAccountDAO
 from app.schemas.bank_account_schema import BankAccountCreate, BankAccountResponse
 from typing import List
@@ -12,14 +12,14 @@ router = APIRouter()
 @router.post("/bank-accounts", response_model=BankAccountResponse)
 def create_account(account_data: BankAccountCreate, db: Session = Depends(get_db)):
     """
-    Create a new bank account for a given customer
+    Create a new bank account for a given entity (customer or administrative entity).
     - customer
     - deposit amount
     - account type
     """
     try:
         account_dao = BankAccountDAO()
-        account_service = CustomerAccountService(account_dao)
+        account_service = BankAccountService(account_dao)
 
         new_account = account_service.create_new_account(db, account_data)
         return new_account
@@ -35,7 +35,7 @@ def list_all_accounts(db: Session = Depends(get_db)):
     """
     try:
         account_dao = BankAccountDAO()
-        account_service = CustomerAccountService(account_dao)
+        account_service = BankAccountService(account_dao)
 
         accounts = account_service.get_all_accounts(db)
         return accounts
@@ -51,7 +51,7 @@ def get_account_details(account_id: int, db: Session = Depends(get_db)):
     """
     try:
         account_dao = BankAccountDAO()
-        account_service = CustomerAccountService(account_dao)
+        account_service = BankAccountService(account_dao)
 
         account = account_service.get_account_by_id(db, account_id)
         if not account:

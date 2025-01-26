@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.services.transaction_service import TransactionService
-from app.services.customer_account_service import CustomerAccountService
+from app.services.bank_account_service import BankAccountService
 from app.dao.transaction_dao import TransactionDAO
 from app.dao.bank_account_dao import BankAccountDAO
 from app.schemas.transaction_schema import (
@@ -34,7 +34,7 @@ def deposit_funds(deposit_data: DepositCreate, db: Session = Depends(get_db)):
     try:
         logger.info(f"Processing deposit: {deposit_data}")
         transaction_dao = TransactionDAO()
-        account_service = CustomerAccountService(BankAccountDAO())
+        account_service = BankAccountService(BankAccountDAO())
         transaction_service = TransactionService(account_service, transaction_dao)
 
         transaction = transaction_service.create_transaction(
@@ -72,7 +72,7 @@ def withdraw_funds(withdraw_data: WithdrawCreate, db: Session = Depends(get_db))
     try:
         logger.info(f"Processing withdrawal: {withdraw_data}")
         transaction_dao = TransactionDAO()
-        account_service = CustomerAccountService(BankAccountDAO())
+        account_service = BankAccountService(BankAccountDAO())
         transaction_service = TransactionService(account_service, transaction_dao)
 
         transaction = transaction_service.create_transaction(
@@ -113,7 +113,7 @@ def transfer_funds(transfer_data: TransferCreate, db: Session = Depends(get_db))
     try:
         logger.info(f"Processing transfer: {transfer_data}")
         transaction_dao = TransactionDAO()
-        account_service = CustomerAccountService(BankAccountDAO())
+        account_service = BankAccountService(BankAccountDAO())
         transaction_service = TransactionService(account_service, transaction_dao)
 
         transaction = transaction_service.create_transaction(
