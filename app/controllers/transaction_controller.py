@@ -7,18 +7,10 @@ from app.dao.transaction_dao import TransactionDAO
 from app.dao.bank_account_dao import BankAccountDAO
 from app.schemas.transaction_schema import (
     DepositCreate,
-    TransactionResponse,
-)
-from app.models.transaction import TransactionType
-from app.utils.exceptions import AccountNotFoundError
-
-from app.schemas.transaction_schema import (
-    DepositCreate,
     WithdrawCreate,
     TransferCreate,
     TransactionResponse,
 )
-from app.models.transaction import TransactionType
 from app.utils.exceptions import AccountNotFoundError, InsufficientFundsError
 import logging
 
@@ -61,7 +53,7 @@ def deposit_funds(deposit_data: DepositCreate, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Unexpected error during deposit: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-    
+
 
 @router.post("/transactions/withdraw", response_model=TransactionResponse)
 def withdraw_funds(withdraw_data: WithdrawCreate, db: Session = Depends(get_db)):
@@ -74,7 +66,7 @@ def withdraw_funds(withdraw_data: WithdrawCreate, db: Session = Depends(get_db))
         account_service = BankAccountService(BankAccountDAO())
         transaction_service = TransactionService(account_service, transaction_dao)
 
-        transaction = transaction_service.create_transaction(
+        transaction = transaction_service.create_withdrawal(
             db,
             amount=withdraw_data.amount,
             source_account_id=withdraw_data.account_id,

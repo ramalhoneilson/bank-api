@@ -16,4 +16,4 @@
  # Extras
  - Implementation of Administrative accounts for better reporting and tracibility
  - Implementation of the Withdraw operation
- 
+ - For simplicity, we will work with Euro only.

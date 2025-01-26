@@ -6,6 +6,9 @@ from app.models.transaction import Transaction, TransactionType
 from app.utils.exceptions import InsufficientFundsError, AccountNotFoundError
 from app.dao.transaction_dao import TransactionDAO
 from app.services.bank_account_service import BankAccountService
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TransactionService:
@@ -24,34 +27,47 @@ class TransactionService:
         Creates a deposit transaction with thread safety and validation logic.
         For deposits, the source account is the cash holding account (administrative_entity) and the destination account is the user account.
         """
-        transaction_type = TransactionType.DEPOSIT
-        # fixing this for the time being. Usually there are multiple cash holding accounts
-        CASH_HOLDING_ACCOUNT_ID = 1 
+        try:
+            if not destination_account_id:
+                raise ValueError("Destination account is required for deposits.")
+            
+            logger.info(f"Processing deposit: {amount} to account: {destination_account_id}")
+            
+            amount_decimal = Decimal(str(amount))
+            
+            if amount_decimal <= 0:
+                raise ValueError("Amount must be positive.")
 
-        if not destination_account_id:
-            raise ValueError("Destination account is required for deposits.")
-        destination_account = self._get_and_lock_account(db, destination_account_id)
-        if not destination_account:
-            raise AccountNotFoundError("Destination account not found.")
-        cash_holding_account = self._get_and_lock_administrative_account(db, CASH_HOLDING_ACCOUNT_ID)
-        if not cash_holding_account:
-            raise AccountNotFoundError("Cash Holding Account not found.")
-        cash_holding_account.balance -= amount
-        destination_account.balance += amount
-        source_account_id = cash_holding_account.id
+            destination_account = self._get_and_lock_account(db, destination_account_id)
+            if not destination_account:
+                raise AccountNotFoundError("Destination account not found.")
+            logger.info(f"Destination account found: {destination_account.id}")
 
-        transaction = Transaction(
-            amount=amount,
-            transaction_type=transaction_type,
-            source_account_id=source_account_id,
-            destination_account_id=destination_account_id,
-        )
-        db.add(transaction)
-        db.commit()
-        db.refresh(transaction)
+            CASH_HOLDING_ACCOUNT_ID = 1  # Replace with dynamic lookup if needed
+            cash_holding_account = self._get_and_lock_account(db, CASH_HOLDING_ACCOUNT_ID)
+            if not cash_holding_account:
+                raise AccountNotFoundError("Cash Holding Account not found.")
+            logger.info(f"Cash holding account found: {cash_holding_account.id}")
 
-        return transaction
+            cash_holding_account.balance -= amount_decimal
+            destination_account.balance += amount_decimal
 
+            transaction = Transaction(
+                amount=amount,
+                transaction_type=TransactionType.DEPOSIT,
+                source_account_id=cash_holding_account.id,
+                destination_account_id=destination_account_id,
+            )
+            db.add(transaction)
+            db.commit()
+            db.refresh(transaction)
+
+            logger.info(f"Deposit transaction created: {transaction.id}")
+            return transaction
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error during deposit transaction: {e}")
+            raise e
 
     def create_transfer(
         self,
@@ -61,36 +77,44 @@ class TransactionService:
         destination_account_id: int = None,
     ) -> Transaction:
         """
-        Create a new transaction with thread safety and validation logic.
+        Create a new transfer transaction with thread safety and validation logic.
         """
-        
-        if not source_account_id or not destination_account_id:
-            raise ValueError("Source and destination accounts are required for transfers.")
-        
-        source_account = self._get_and_lock_account(db, source_account_id)
-        destination_account = self._get_and_lock_account(db, destination_account_id)
-        if not source_account or not destination_account:
-            raise AccountNotFoundError("One or both accounts not found.")
-        
-        if source_account.balance < amount:
-            raise InsufficientFundsError("Insufficient funds in the source account.")
-        
-        source_account.balance -= amount
-        destination_account.balance += amount
+        try:
+            if not source_account_id or not destination_account_id:
+                raise ValueError("Source and destination accounts are required for transfers.")
 
-        transaction_type = TransactionType.TRANSFER
-        # Create and save the transaction
-        transaction = Transaction(
-            amount=amount,
-            transaction_type=transaction_type,
-            source_account_id=source_account_id,
-            destination_account_id=destination_account_id,
-        )
-        db.add(transaction)
-        db.commit()
-        db.refresh(transaction)
+            amount_decimal = Decimal(str(amount))
 
-        return transaction
+            if amount_decimal <= 0:
+                raise ValueError("Amount must be positive.")
+
+            source_account = self._get_and_lock_account(db, source_account_id)
+            destination_account = self._get_and_lock_account(db, destination_account_id)
+            if not source_account or not destination_account:
+                raise AccountNotFoundError("One or both accounts not found.")
+
+            if source_account.balance < amount_decimal:
+                raise InsufficientFundsError("Insufficient funds in the source account.")
+
+            source_account.balance -= amount_decimal
+            destination_account.balance += amount_decimal
+
+            transaction = Transaction(
+                amount=amount_decimal,
+                transaction_type=TransactionType.TRANSFER,
+                source_account_id=source_account_id,
+                destination_account_id=destination_account_id,
+            )
+            db.add(transaction)
+            db.commit()
+            db.refresh(transaction)
+
+            logger.info(f"Transfer transaction created: {transaction.id}")
+            return transaction
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error during transfer transaction: {e}")
+            raise e
 
     def create_withdrawal(
         self,
@@ -99,41 +123,48 @@ class TransactionService:
         source_account_id: int = None,
     ) -> Transaction:
         """
-        Create a new transaction with thread safety and validation logic.
+        Create a new withdrawal transaction with thread safety and validation logic.
         """
-        if not source_account_id:
-            raise ValueError("Source account is required for withdrawals.")
-        
-        source_account = self._get_and_lock_account(db, source_account_id)
-        if not source_account:
-            raise AccountNotFoundError("Source account not found.")
-        
-        if source_account.balance < amount:
-            raise InsufficientFundsError("Insufficient funds in the source account.")
-        
-        CASH_DISBURSEMENT_ACCOUNT_ID = 2
-        
-        cash_disbursement_account = self._get_and_lock_administrative_account(db, CASH_DISBURSEMENT_ACCOUNT_ID)
-        if not cash_disbursement_account:
-            raise AccountNotFoundError("Cash Disbursement Account not found.")
-        
-        source_account.balance -= amount
-        cash_disbursement_account.balance += amount
-        destination_account_id = cash_disbursement_account.id
+        try:
+            if not source_account_id:
+                raise ValueError("Source account is required for withdrawals.")
+            
+            amount_decimal = Decimal(str(amount))
 
-        transaction_type = TransactionType.WITHDRAW
-        transaction = Transaction(
-            amount=amount,
-            transaction_type=transaction_type,
-            source_account_id=source_account_id,
-            destination_account_id=destination_account_id,
-        )
-        db.add(transaction)
-        db.commit()
-        db.refresh(transaction)
+            if amount_decimal <= 0:
+                raise ValueError("Amount must be positive.")
 
-        return transaction
+            source_account = self._get_and_lock_account(db, source_account_id)
+            if not source_account:
+                raise AccountNotFoundError("Source account not found.")
 
+            if source_account.balance < amount_decimal:
+                raise InsufficientFundsError("Insufficient funds in the source account.")
+
+            CASH_DISBURSEMENT_ACCOUNT_ID = 2  # Replace with dynamic lookup if needed
+            cash_disbursement_account = self._get_and_lock_account(db, CASH_DISBURSEMENT_ACCOUNT_ID)
+            if not cash_disbursement_account:
+                raise AccountNotFoundError("Cash Disbursement Account not found.")
+
+            source_account.balance -= amount_decimal
+            cash_disbursement_account.balance += amount_decimal
+
+            transaction = Transaction(
+                amount=amount_decimal,
+                transaction_type=TransactionType.WITHDRAW,
+                source_account_id=source_account_id,
+                destination_account_id=cash_disbursement_account.id,
+            )
+            db.add(transaction)
+            db.commit()
+            db.refresh(transaction)
+
+            logger.info(f"Withdrawal transaction created: {transaction.id}")
+            return transaction
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error during withdrawal transaction: {e}")
+            raise e
 
     def _get_and_lock_account(self, db: Session, account_id: int) -> BankAccount:
         """
@@ -144,28 +175,6 @@ class TransactionService:
             .where(BankAccount.id == account_id)
             .with_for_update()
         ).scalar_one_or_none()
-
-    def _get_and_lock_administrative_account(self, db: Session, administrative_account_id: int) -> BankAccount:
-        """
-        Fetch and lock an bank account associated with the administrative_account_id
-        """
-        return db.execute(
-            select(BankAccount)
-            .where(BankAccount.administrative_entity_id == administrative_account_id)
-            .with_for_update()
-        ).scalar_one_or_none()
-  
-
-    def create_deposit(self, db: Session, amount: Decimal, destination_account_id: int) -> Transaction:
-        """
-        Create a new deposit transaction.
-        """
-        return self.create_transaction(
-            db,
-            amount=amount,
-            transaction_type=TransactionType.DEPOSIT,
-            destination_account_id=destination_account_id,
-        )
 
     def get_transaction_by_id(self, db: Session, transaction_id: int) -> Transaction:
         """

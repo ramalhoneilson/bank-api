@@ -1,9 +1,46 @@
-### Transfer funds from an administrative account to a customer account
+###Check bank account with id 5
+GET http://0.0.0.0:8000/api/v1/bank-accounts/5
+
+###Check bank account with id 6
+GET http://0.0.0.0:8000/api/v1/bank-accounts/6
+
+###Check all bank accounts
+GET http://0.0.0.0:8000/api/v1/bank-accounts
+
+
+###Check all administative entities
+GET http://0.0.0.0:8000/api/v1/bank-accounts
+
+### 1. Create a Deposit Transaction
+POST http://0.0.0.0:8000/api/v1/transactions/deposit
+Content-Type: application/json
+
+{
+  "amount": 20.00,
+  "account_id": 6
+}
+
+### 2. Create a Withdrawal Transaction
+POST http://0.0.0.0:8000/api/v1/transactions/withdraw
+Content-Type: application/json
+
+{
+  "amount": 8.00,
+  "account_id": 5
+}
+
+### 3. Create a Transfer Transaction
 POST http://0.0.0.0:8000/api/v1/transactions/transfer
 Content-Type: application/json
 
 {
-  "amount": 1000.00,
-  "source_account_id": 1,  
-  "destination_account_id": 2  
+  "amount": 42.00,
+  "source_account_id": 6,
+  "destination_account_id": 5
 }
+
+### 4. Get All Transactions (Optional - If you have an endpoint for this)
+GET http://0.0.0.0:8000/api/v1/transactions
+
+### 5. Get Transaction by ID (Optional - If you have an endpoint for this)
+GET http://0.0.0.0:8000/api/v1/transactions/1  # Replace with a valid transaction ID
