@@ -7,3 +7,4 @@ pytest
 python-dotenv
 pre-commit
 alembic
+autopep8

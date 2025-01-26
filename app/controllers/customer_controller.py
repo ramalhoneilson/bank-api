@@ -11,10 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/customers", response_model=CustomerResponse)
-def create_customer(
-    customer_data: CustomerCreate,
-    db: Session = Depends(get_db)
-):
+def create_customer(customer_data: CustomerCreate, db: Session = Depends(get_db)):
     """
     Create a new customer
     - customer name
@@ -34,10 +31,7 @@ def create_customer(
 
 
 @router.get("/customers/{customer_id}", response_model=CustomerResponse)
-def get_customer(
-    customer_id: int,
-    db: Session = Depends(get_db)
-):
+def get_customer(customer_id: int, db: Session = Depends(get_db)):
     """
     Get details of a specific customer by ID
     """
@@ -56,9 +50,7 @@ def get_customer(
 
 
 @router.get("/customers", response_model=list[CustomerResponse])
-def get_all_customers(
-    db: Session = Depends(get_db)
-):
+def get_all_customers(db: Session = Depends(get_db)):
     """
     Get a list of all customers
     """

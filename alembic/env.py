@@ -6,8 +6,8 @@ from sqlalchemy import pool
 from alembic import context
 import os
 from app.database.base import Base
-from app.models.customer import Customer
-from app.models.account import Account
+from app.models.customer import Customer  # noqa: F401
+from app.models.account import Account  # noqa: F401
 
 from dotenv import load_dotenv
 
@@ -81,9 +81,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

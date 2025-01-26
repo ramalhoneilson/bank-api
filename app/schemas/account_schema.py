@@ -5,7 +5,8 @@ from datetime import datetime
 
 class AccountCreate(BaseModel):
     customer_id: int
-    initial_deposit: Decimal = Field(..., gt=0, description="Initial deposit amount")
+    initial_deposit: Decimal = Field(..., gt=0,
+                                     description="Initial deposit amount")
     account_type: str = Field(..., description="Type of account")
 
     class Config:

@@ -9,10 +9,7 @@ router = APIRouter()
 
 
 @router.post("/accounts", response_model=AccountResponse)
-def create_account(
-    account_data: AccountCreate,
-    db: Session = Depends(get_db)
-):
+def create_account(account_data: AccountCreate, db: Session = Depends(get_db)):
     """
     Create a new bank account for a given customer
     - customer

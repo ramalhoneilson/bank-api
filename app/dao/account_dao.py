@@ -6,13 +6,13 @@ from app.schemas.account_schema import AccountCreate
 
 class AccountDAO:
     def create_account(self, db: Session, account_data: AccountCreate) -> Account:
-        account_number = str(uuid.uuid4()).replace('-', '')[:12].upper()
+        account_number = str(uuid.uuid4()).replace("-", "")[:12].upper()
 
         db_account = Account(
             customer_id=account_data.customer_id,
             account_number=account_number,
             balance=account_data.initial_deposit,
-            account_type=account_data.account_type
+            account_type=account_data.account_type,
         )
 
         db.add(db_account)

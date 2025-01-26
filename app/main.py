@@ -13,7 +13,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Banking App API",
     description="REST API for Bank Account Management",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 # Include router

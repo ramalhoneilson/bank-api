@@ -4,8 +4,8 @@ from sqlalchemy.orm import relationship
 
 
 class Customer(Base):
-    __tablename__ = 'customers'
+    __tablename__ = "customers"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String, nullable=False)
-    accounts = relationship('Account', back_populates='customer')
+    accounts = relationship("Account", back_populates="customer")

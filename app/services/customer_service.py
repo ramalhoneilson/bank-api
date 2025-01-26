@@ -7,8 +7,9 @@ class CustomerService:
     def __init__(self, customer_dao: CustomerDAO):
         self.customer_dao = customer_dao
 
-    def create_new_customer(self, db: Session, customer_data: CustomerCreate) -> CustomerResponse:
-
+    def create_new_customer(
+        self, db: Session, customer_data: CustomerCreate
+    ) -> CustomerResponse:
         if not customer_data.name:
             raise ValueError("Customer name cannot be empty")
 
