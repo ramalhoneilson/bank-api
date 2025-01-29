@@ -9,17 +9,19 @@ class AdministrativeEntityDAO:
         """
         Create a new administrative entity.
         """
-        entity = AdministrativeEntity(**entity_data)
-        db.add(entity)
+        entity_dict = entity_data.model_dump()
+        admin_entity = AdministrativeEntity(**entity_dict)
+        db.add(admin_entity)
         db.commit()
-        db.refresh(entity)
-        return entity
+        db.refresh(admin_entity)
+        return admin_entity
 
     def get_all_corporate_entities(self, db: Session) -> List[AdministrativeEntity]:
         """
         Fetch all administrative entities.
         """
-        return db.query(AdministrativeEntity).all()
+        entities = db.query(AdministrativeEntity).all()
+        return [{"id": entity.id, "coorporate_name": entity.coorporate_name, "tax_id": entity.tax_id} for entity in entities]
 
     def get_corporate_entity_by_id(self, db: Session, entity_id: int) -> Optional[AdministrativeEntity]:
         """

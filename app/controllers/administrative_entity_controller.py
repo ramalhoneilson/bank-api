@@ -15,7 +15,7 @@ def create_corporate_entity(entity_data: AdministrativeEntityCreate, db: Session
         entity_dao = AdministrativeEntityDAO()
         entity_service = AdministrativeEntityService(entity_dao)
         # TODO: check why we need to pass the entire Pydantic model, not just model_dump()
-        new_entity = entity_service.create_administrative_entity(db, entity_data.model_dump())
+        new_entity = entity_service.create_administrative_entity(db, entity_data)
         return new_entity
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -10,15 +10,20 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+def get_customer_serivce():
+    customer_dao = CustomerDAO()
+    customer_service = CustomerService(customer_dao)
+    return customer_service
+
+
 @router.post("/customers", response_model=CustomerResponse)
-def create_customer(customer_data: CustomerCreate, db: Session = Depends(get_db)):
+def create_customer(customer_data: CustomerCreate, db: Session = Depends(get_db), 
+                    customer_service: CustomerService = Depends(get_customer_serivce)):
     """
     Create a new customer
     - customer_name
     """
     try:
-        customer_dao = CustomerDAO()
-        customer_service = CustomerService(customer_dao)
         logging.info(f"Creating new customer: {customer_data}")
 
         new_customer = customer_service.create_new_customer(db, customer_data)

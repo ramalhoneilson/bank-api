@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-
+# customer_name should be mandatory and a string type
 class CustomerBase(BaseModel):
     customer_name: str
 
@@ -11,6 +11,5 @@ class CustomerCreate(CustomerBase):
 
 class CustomerResponse(CustomerBase):
     id: int
+    customer_name: str
 
-    class Config:
-        from_attributes = True

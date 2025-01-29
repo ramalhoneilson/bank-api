@@ -1,19 +1,21 @@
 from pydantic import BaseModel
+from pydantic.dataclasses import ConfigDict
 
 
-class AdministrativeEntityBase(BaseModel):
+class AdministrativeEntityCreate(BaseModel):
     tax_id: str
-
-
-class AdministrativeEntityCreate(AdministrativeEntityBase):
     coorporate_name: str
 
 
-class AdministrativeEntityResponse(AdministrativeEntityBase):
+class AdministrativeEntityResponse(BaseModel):
+    id: int
     tax_id: str
+    coorporate_name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="forbid"
+    )
 
 
 class AdministrativeEntityListResponse(BaseModel):
@@ -21,5 +23,3 @@ class AdministrativeEntityListResponse(BaseModel):
     coorporate_name: str
     tax_id: str
 
-    class Config:
-        from_attributes = True

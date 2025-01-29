@@ -2,6 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 from app.models.transaction import TransactionType
+from pydantic.dataclasses import ConfigDict
 
 
 class TransactionBase(BaseModel):
@@ -35,5 +36,6 @@ class TransactionResponse(TransactionBase):
     id: int
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        extra="forbid"
+    )

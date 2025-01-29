@@ -1,0 +1,10 @@
+Create equivalence partitioning and test cases
+Check how to test the thread safety in the transfer parts
+Implement validation
+Implement API testing
+Check cucumber for python
+Implement CI/CD with git actions
+
+Implement JwT
+Check good practices for API evulution - open api?
+How would we deploy this in production? on AWS? Would postgres be in a separate container?

@@ -11,14 +11,19 @@ class AdministrativeEntityService:
 
 
     def create_administrative_entity(self, db: Session, entity_data: dict):
-        corporate_entity = AdministrativeEntity(
-            coorporate_name=entity_data['coorporate_name'],
-            tax_id=entity_data['tax_id']
-        )
-        db.add(corporate_entity)
-        db.commit()
-        db.refresh(corporate_entity)
-        return corporate_entity
+        if not entity_data.coorporate_name:
+            raise ValueError("Company name cannot be empty")
+        if not entity_data.tax_id:
+            raise ValueError("Tax Id cannot be empty")
+
+        created_entity = self.entity_dao.create_corporate_entity(db, entity_data)
+
+        entity_dict = {
+            "id": created_entity.id,
+            "coorporate_name": created_entity.coorporate_name,
+            "tax_id": created_entity.tax_id
+        }
+        return AdministrativeEntityResponse.model_validate(entity_dict)
     
     def get_all_administrative_entities(self, db: Session) -> List[AdministrativeEntityListResponse]:
         """

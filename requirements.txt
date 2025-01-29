@@ -8,3 +8,6 @@ python-dotenv
 pre-commit
 alembic
 autopep8
+pytest_bdd
+httpx
+coverage

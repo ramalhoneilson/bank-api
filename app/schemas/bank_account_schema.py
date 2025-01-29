@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from app.models.bank_account import AccountType
+from pydantic.dataclasses import ConfigDict
 
 class BankAccountCreate(BaseModel):
     balance: float
@@ -7,8 +8,9 @@ class BankAccountCreate(BaseModel):
     status: str
     owner_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        extra="forbid"
+    )
 
 
 class BankAccountResponse(BaseModel):
@@ -17,7 +19,4 @@ class BankAccountResponse(BaseModel):
     balance: float
     account_type: AccountType
     status: str
-
-    class Config:
-        from_attributes = True
 
