@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
@@ -33,10 +34,24 @@ class TransferCreate(BaseModel):
     destination_account_id: int
 
 
-class TransactionResponse(TransactionBase):
+class TransactionResponse(BaseModel):
     id: int
+    amount: float
+    transaction_type: str
+    source_account_id: Optional[int]
+    destination_account_id: Optional[int]
     timestamp: datetime
 
-    model_config = ConfigDict(
-        extra="forbid"
-    )
+    class Config:
+        from_attributes = True
+
+    @classmethod
+    def from_transaction(cls, transaction):
+        return cls(
+            id=transaction.id,
+            amount=float(transaction.amount),
+            transaction_type=transaction.transaction_type.value,  # Convert enum to string
+            source_account_id=transaction.source_account_id,
+            destination_account_id=transaction.destination_account_id,
+            timestamp=transaction.timestamp
+        )

@@ -5,7 +5,6 @@ psycopg2-binary
 pydantic
 pytest
 python-dotenv
-pre-commit
 alembic
 autopep8
 pytest_bdd

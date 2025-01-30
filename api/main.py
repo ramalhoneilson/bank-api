@@ -16,18 +16,18 @@ logger.info("Creating database tables...")
 Base.metadata.create_all(bind=engine)
 logger.info("Database tables created successfully.")
 
-app = FastAPI(
+api = FastAPI(
     title="Banking App API",
     description="REST API for Bank Account Management",
     version="0.1.0",
 )
 
-app.include_router(account_router, prefix="/api/v1", tags=["bank-accounts"])
-app.include_router(customer_router, prefix="/api/v1", tags=["customers"])
-app.include_router(administrative_entity_router, prefix="/api/v1", tags=["administrative-entities"])
-app.include_router(transaction_router, prefix="/api/v1", tags=["transactions"])
+api.include_router(account_router, prefix="/api/v1", tags=["bank-accounts"])
+api.include_router(customer_router, prefix="/api/v1", tags=["customers"])
+api.include_router(administrative_entity_router, prefix="/api/v1", tags=["administrative-entities"])
+api.include_router(transaction_router, prefix="/api/v1", tags=["transactions"])
 
 
-@app.get("/ping")
+@api.get("/ping")
 def health_check():
     return {"status": "ok"}

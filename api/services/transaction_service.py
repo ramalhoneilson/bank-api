@@ -167,15 +167,21 @@ class TransactionService:
             logger.error(f"Error during withdrawal transaction: {e}")
             raise e
 
+
     def _get_and_lock_account(self, db: Session, account_id: int) -> BankAccount:
         """
         Fetch and lock a bank account for thread safety.
         """
-        return db.execute(
+        account = db.execute(
             select(BankAccount)
             .where(BankAccount.id == account_id)
-            .with_for_update()
+            .with_for_update()  # This ensures proper locking
         ).scalar_one_or_none()
+
+        if not account:
+            raise AccountNotFoundError(f"Account {account_id} not found")
+
+        return account
 
     def get_transaction_by_id(self, db: Session, transaction_id: int) -> Transaction:
         """

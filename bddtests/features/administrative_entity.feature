@@ -13,7 +13,7 @@ Feature: Administrative Entity Management
         Given I provide invalid administrative entity data
         When I send a POST request to "/api/v1/administrative_entity" with the invalid entity data
         Then the response status code should be 400
-        And the response should contain an error message
+        And the response should contain an administrative entity error message
 
     Scenario: Successfully retrieve all administrative entities
         Given there are existing administrative entities
@@ -31,4 +31,4 @@ Feature: Administrative Entity Management
         Given there is no administrative entity with id "999"
         When I send a GET request to "/api/v1/administrative_entities/999"
         Then the response status code should be 404
-        And the response should contain an error message
+        And the response should contain an administrative entity error message

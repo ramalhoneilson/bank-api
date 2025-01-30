@@ -21,29 +21,29 @@ logger = logging.getLogger(__name__)
 
 @router.post("/transactions/deposit", response_model=TransactionResponse)
 def deposit_funds(deposit_data: DepositCreate, db: Session = Depends(get_db)):
-    """
-    Deposit funds into an account. Deposits always move money from an administrative account to a user account.
-    """
     try:
-        logger.info(f"Processing deposit: {deposit_data}")
-        transaction_dao = TransactionDAO()
-        account_service = BankAccountService(BankAccountDAO())
-        transaction_service = TransactionService(account_service, transaction_dao)
+        transaction_service = TransactionService(BankAccountService(BankAccountDAO()), TransactionDAO())
 
         transaction = transaction_service.create_deposit_transaction(
-            db,
+            db=db,
             amount=deposit_data.amount,
-            destination_account_id=deposit_data.account_id,
+            destination_account_id=deposit_data.account_id
         )
 
-        return TransactionResponse(
-            id=transaction.id,
-            amount=float(transaction.amount),
-            transaction_type=transaction.transaction_type.value,
-            source_account_id=transaction.source_account_id,
-            destination_account_id=transaction.destination_account_id,
-            timestamp=transaction.timestamp,
-        )
+        db.refresh(transaction)
+
+        return TransactionResponse.model_validate(transaction)
+
+    except AccountNotFoundError as e:
+        db.rollback()
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     except ValueError as e:
         logger.error(f"Validation error during deposit: {e}")

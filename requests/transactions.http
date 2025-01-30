@@ -1,5 +1,5 @@
 ###Check bank account with id 5
-GET http://0.0.0.0:8000/api/v1/bank-accounts/5
+GET http://0.0.0.0:8000/api/v1/bank-accounts/3
 
 ###Check bank account with id 6
 GET http://0.0.0.0:8000/api/v1/bank-accounts/6
