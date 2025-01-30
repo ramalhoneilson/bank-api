@@ -5,9 +5,9 @@ from sqlalchemy import pool
 
 from alembic import context
 import os
-from app.database.base import Base
-from app.models.customer import Customer  # noqa: F401
-from app.models.bank_account import BankAccount  # noqa: F401
+from api.database.base import Base
+from api.models.customer import Customer  # noqa: F401
+from api.models.bank_account import BankAccount  # noqa: F401
 
 from dotenv import load_dotenv
 

@@ -10,4 +10,4 @@ alembic
 autopep8
 pytest_bdd
 httpx
-coverage
+pytest-cov

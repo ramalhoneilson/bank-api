@@ -1,7 +1,7 @@
 import pytest
 from pytest_bdd import scenarios, given, when, then, parsers
 from fastapi.testclient import TestClient
-from app.main import app
+from api.main import app
 import logging
 
 
