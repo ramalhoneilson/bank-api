@@ -26,7 +26,7 @@ def context():
 def valid_entity_data(context):
     context.entity_data = {
         "tax_id": "123456789",
-        "coorporate_name": "Test Corporation"
+        "corporate_name": "Test Corporation"
     }
     logger.debug(f"Valid entity data: {context.entity_data}")
 
@@ -35,7 +35,7 @@ def valid_entity_data(context):
 def invalid_entity_data(context):
     context.entity_data = {
         "tax_id": "",
-        "coorporate_name": ""
+        "corporate_name": ""
     }
     logger.debug(f"Invalid entity data: {context.entity_data}")
 
@@ -44,7 +44,7 @@ def invalid_entity_data(context):
 def existing_entities(context, client):
     test_data = {
         "tax_id": "123456789",
-        "coorporate_name": "Test Corp"
+        "corporate_name": "Test Corp"
     }
     response = client.post("/api/v1/administrative_entity", json=test_data)
     assert response.status_code == 200
@@ -56,7 +56,7 @@ def existing_entity(context, client, entity_id):
     if not hasattr(context, 'test_entity'):
         test_data = {
             "tax_id": "123456789",
-            "coorporate_name": "Test Corp"
+            "corporate_name": "Test Corp"
         }
         response = client.post("/api/v1/administrative_entity", json=test_data)
         assert response.status_code == 200
@@ -110,12 +110,12 @@ def check_status_code(context, status_code):
 def check_entity_details(context):
     response_data = context.response.json()
     assert "tax_id" in response_data, "Response should contain tax_id"
-    assert "coorporate_name" in response_data, "Response should contain coorporate_name"
+    assert "corporate_name" in response_data, "Response should contain corporate_name"
     assert "id" in response_data, "Response should contain id"
     assert response_data["tax_id"] == context.entity_data["tax_id"], \
         "Response tax_id should match input tax_id"
-    assert response_data["coorporate_name"] == context.entity_data["coorporate_name"], \
-        "Response coorporate_name should match input coorporate_name"
+    assert response_data["corporate_name"] == context.entity_data["corporate_name"], \
+        "Response corporate_name should match input corporate_name"
 
 
 @then('the response should contain a list of entities')
@@ -125,7 +125,7 @@ def check_entity_list(context):
     if len(response_data) > 0:
         assert "id" in response_data[0], "Entity should contain id"
         assert "tax_id" in response_data[0], "Entity should contain tax_id"
-        assert "coorporate_name" in response_data[0], "Entity should contain coorporate_name"
+        assert "corporate_name" in response_data[0], "Entity should contain corporate_name"
 
 
 @then('the response should contain the entity details')

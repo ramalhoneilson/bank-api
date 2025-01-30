@@ -11,7 +11,7 @@ class AdministrativeEntityService:
 
 
     def create_administrative_entity(self, db: Session, entity_data: dict):
-        if not entity_data.coorporate_name:
+        if not entity_data.corporate_name:
             raise ValueError("Company name cannot be empty")
         if not entity_data.tax_id:
             raise ValueError("Tax Id cannot be empty")
@@ -20,7 +20,7 @@ class AdministrativeEntityService:
 
         entity_dict = {
             "id": created_entity.id,
-            "coorporate_name": created_entity.coorporate_name,
+            "corporate_name": created_entity.corporate_name,
             "tax_id": created_entity.tax_id
         }
         return AdministrativeEntityResponse.model_validate(entity_dict)

@@ -1,18 +1,18 @@
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ['py311']
 include = '\.pyi?$'
 exclude = '''
 /(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
+ \.git
+ | \.hg
+ | \.mypy_cache
+ | \.tox
+ | \.venv
+ | _build
+ | buck-out
+ | build
+ | dist
 )/
 '''
 
@@ -24,3 +24,13 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 88
+
+[tool.pytest.ini_options]
+addopts = "-v"
+testpaths = ["bddtests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+bdd_features_base_dir = "bddtests/features"
+markers = [
+    "scenario: pytest-bdd scenario marker",
+]

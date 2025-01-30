@@ -19,6 +19,7 @@ class TransactionCreate(TransactionBase):
 class DepositCreate(BaseModel):
     amount: float
     account_id: int
+    source_account_id: int
 
 
 class WithdrawCreate(BaseModel):

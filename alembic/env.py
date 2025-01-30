@@ -12,8 +12,12 @@ from api.models.bank_account import BankAccount  # noqa: F401
 from dotenv import load_dotenv
 
 load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+# get environment
+environment = os.getenv("ENVIRONMENT")
+if environment == "development": # sqlite
+    DATABASE_URL = 'sqlite:///./test.db'
+else:
+    DATABASE_URL = os.getenv("DATABASE_URL")
 
 config = context.config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)

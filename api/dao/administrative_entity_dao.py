@@ -21,7 +21,7 @@ class AdministrativeEntityDAO:
         Fetch all administrative entities.
         """
         entities = db.query(AdministrativeEntity).all()
-        return [{"id": entity.id, "coorporate_name": entity.coorporate_name, "tax_id": entity.tax_id} for entity in entities]
+        return [{"id": entity.id, "corporate_name": entity.corporate_name, "tax_id": entity.tax_id} for entity in entities]
 
     def get_corporate_entity_by_id(self, db: Session, entity_id: int) -> Optional[AdministrativeEntity]:
         """
