@@ -38,6 +38,7 @@ class TestTransactionService:
         transaction = transaction_service.create_deposit_transaction(
             db_session,
             amount=amount,
+            source_account_id=cash_holding_account.id,
             destination_account_id=user_account.id
         )
 
@@ -69,6 +70,7 @@ class TestTransactionService:
             transaction_service.create_deposit_transaction(
                 db_session,
                 amount=Decimal('-100'),
+                source_account_id=1,
                 destination_account_id=3
             )
 
@@ -78,6 +80,7 @@ class TestTransactionService:
             transaction_service.create_deposit_transaction(
                 db_session,
                 amount=Decimal('100'),
+                source_account_id=1,
                 destination_account_id=None
             )
 
@@ -132,7 +135,8 @@ class TestTransactionService:
         transaction = transaction_service.create_withdrawal(
             db_session,
             amount=amount,
-            source_account_id=user_account.id
+            source_account_id=user_account.id,
+            destination_account_id=cash_disbursement_account.id
         )
 
         

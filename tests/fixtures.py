@@ -1,6 +1,6 @@
 import pytest
 from decimal import Decimal
-from api.models.bank_account import BankAccount
+from api.models.bank_account import AccountType, BankAccount
 from api.models.customer import Customer
 import uuid
 
@@ -19,7 +19,7 @@ def cash_holding_account(db_session, system_customer):
         account_number=str(uuid.uuid4()),
         balance=Decimal('10000'),
         customer_id=system_customer.id,
-        account_type="USER",
+        account_type=AccountType.ADMINISTRATIVE,
         status="ACTIVE"
     )
     db_session.add(account)
@@ -33,7 +33,7 @@ def cash_disbursement_account(db_session, system_customer):
         account_number=str(uuid.uuid4()),
         balance=Decimal('10000'),
         customer_id=system_customer.id,
-        account_type="USER",
+        account_type=AccountType.ADMINISTRATIVE,
         status="ACTIVE"
     )
     db_session.add(account)
@@ -47,7 +47,7 @@ def user_account(db_session, system_customer):
         account_number=str(uuid.uuid4()),
         balance=Decimal('1000'),
         customer_id=system_customer.id,
-        account_type="USER",
+        account_type=AccountType.USER,
         status="ACTIVE"
     )
     db_session.add(account)
