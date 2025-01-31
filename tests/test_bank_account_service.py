@@ -49,15 +49,14 @@ class TestBankAccountService:
         retrieved_account = bank_account_service.get_administrative_account(db_session, admin_account.account_number)
 
         assert retrieved_account is not None
-        assert isinstance(retrieved_account, BankAccountResponse)  # Check if the returned type is correct
+        assert isinstance(retrieved_account, BankAccountResponse)
         assert retrieved_account.account_type == AccountType.ADMINISTRATIVE
 
     def test_get_administrative_account_not_found(self, db_session, bank_account_service):
         retrieved_account = bank_account_service.get_administrative_account(db_session, "nonexistent_account")
         assert retrieved_account is None
 
-    def test_get_all_accounts(self, db_session, bank_account_service, system_customer):  # Use system_customer
-        # Create some more accounts for testing
+    def test_get_all_accounts(self, db_session, bank_account_service, system_customer):
         BankAccountDAO().create_account(db_session, BankAccountCreate(balance=0, account_type=AccountType.USER, status=AccountStatus.ACTIVE, owner_id=system_customer.id))
         BankAccountDAO().create_account(db_session, BankAccountCreate(balance=0, account_type=AccountType.USER, status=AccountStatus.ACTIVE, owner_id=system_customer.id))
         accounts = bank_account_service.get_all_accounts(db_session)
@@ -86,5 +85,5 @@ class TestBankAccountService:
         assert isinstance(retrieved_account.status, AccountStatus)
 
     def test_get_account_by_id_not_found(self, db_session, bank_account_service):
-        retrieved_account = bank_account_service.get_account_by_id(db_session, 999)  # Nonexistent ID
+        retrieved_account = bank_account_service.get_account_by_id(db_session, 999)
         assert retrieved_account is None

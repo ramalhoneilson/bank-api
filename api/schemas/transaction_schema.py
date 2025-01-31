@@ -50,7 +50,7 @@ class TransactionResponse(BaseModel):
         return cls(
             id=transaction.id,
             amount=float(transaction.amount),
-            transaction_type=transaction.transaction_type.value,  # Convert enum to string
+            transaction_type=transaction.transaction_type.value,
             source_account_id=transaction.source_account_id,
             destination_account_id=transaction.destination_account_id,
             timestamp=transaction.timestamp

@@ -12,13 +12,11 @@ import os
 
 logger = logging.getLogger(__name__)
 
-# Define the database URL
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 
 def before_all(context):
     """Initialize FastAPI test client and ensure the database is clean."""
-    # Delete the SQLite database file if it exists
     if os.path.exists("test.db"):
         try:
             os.remove("test.db")
@@ -26,10 +24,8 @@ def before_all(context):
         except Exception as e:
             logger.error(f"Error deleting test database: {e}")
 
-    # Initialize the test client
     context.client = TestClient(api)
 
-    # Create a new database
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
         connect_args={"check_same_thread": False}
@@ -40,7 +36,6 @@ def before_all(context):
 
 def before_scenario(context, scenario):
     """Initialize database and test data before each scenario."""
-    # Create a new database engine and session
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
         connect_args={"check_same_thread": False}
@@ -50,7 +45,6 @@ def before_scenario(context, scenario):
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     context.db_session = TestingSessionLocal()
 
-    # Set up test data
     setup_test_data(context.db_session)
     logger.debug("Test data set up for scenario.")
 
@@ -71,9 +65,8 @@ def after_scenario(context, scenario):
 
 
 def setup_test_data(db_session):
-    """Set up all necessary test data."""
+    """some basic test data"""
     try:
-        # Create test customers
         customer1 = Customer(
             customer_name="Test Customer 1"
         )
@@ -84,7 +77,6 @@ def setup_test_data(db_session):
         )
         db_session.add(customer2)
 
-        # Create administrative entity
         admin_entity = AdministrativeEntity(
             corporate_name="Test Admin Entity"
         )

@@ -1,4 +1,3 @@
-# environment.py
 from behave import given, when, then
 from fastapi.testclient import TestClient
 from api.main import api
@@ -42,13 +41,6 @@ def step_send_post_request(context, endpoint):
         logger.debug(f"Response body: {response_body}")
     except Exception as e:
         logger.debug(f"Could not parse response body: {e}")
-
-# Note: This step is redundant since it's the same as the above step
-# Remove this step and update your feature file to use just one step
-# @when('I send a POST request to "{endpoint}" with the invalid customer data')
-# def step_send_invalid_post_request(context, endpoint):
-#     ...
-
 
 @then('the response status code should be {status_code:d}')
 def step_check_status_code(context, status_code):

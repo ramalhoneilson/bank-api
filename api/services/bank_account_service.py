@@ -14,20 +14,20 @@ class BankAccountService:
 
     def create_new_account(self, db: Session, account_data: BankAccountCreate) -> BankAccountResponse:
         created_account = self.account_dao.create_account(db, account_data)
-        return BankAccountResponse.model_validate(attributes.instance_dict(created_account))  # Use instance_dict
+        return BankAccountResponse.model_validate(attributes.instance_dict(created_account))
 
     def get_all_accounts(self, db: Session) -> List[BankAccountResponse]:
         accounts = self.account_dao.get_all_accounts(db)
-        return [BankAccountResponse.model_validate(attributes.instance_dict(account)) for account in accounts]  # Use instance_dict
+        return [BankAccountResponse.model_validate(attributes.instance_dict(account)) for account in accounts] 
 
     def get_account_by_id(self, db: Session, account_id: int) -> Optional[BankAccountResponse]:
         account = self.account_dao.get_account_by_id(db, account_id)
         if account:
-            return BankAccountResponse.model_validate(attributes.instance_dict(account))  # Use instance_dict
+            return BankAccountResponse.model_validate(attributes.instance_dict(account))
         return None
 
     def get_administrative_account(self, db: Session, account_name: str) -> Optional[BankAccountResponse]:
         account = self.account_dao.get_account_by_name_and_type(db, account_name, AccountType.ADMINISTRATIVE)
         if account:
-            return BankAccountResponse.model_validate(attributes.instance_dict(account))  # Use instance_dict
+            return BankAccountResponse.model_validate(attributes.instance_dict(account))
         return None
