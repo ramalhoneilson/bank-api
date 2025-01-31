@@ -22,7 +22,6 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 
-
 def generate_account_number(prefix='U'):
     """Generate a unique account number."""
     return f"{prefix}-{str(uuid.uuid4())[:8]}"
@@ -104,6 +103,14 @@ def step_setup_admin_account(context, balance):
 def step_setup_source_and_destination_accounts(context, source_balance, dest_balance):
     context.source_account = create_user_account(context, balance=source_balance)
     context.destination_account = create_user_account(context, balance=dest_balance)
+    context.db_session.commit()
+
+
+@given('I have a source account that does not exist and a destination account with balance of {dest_balance:d}')
+def step_setup_source_and_destination_accounts(context, dest_balance):
+    context.invalid_source_account = 9999999
+    context.destination_account = create_user_account(context, balance=dest_balance)
+    context.db_session.commit()
 
 
 @given('I have a user account with some transactions')
@@ -114,12 +121,19 @@ def step_setup_transactions(context):
     transaction_service = TransactionService(account_service, transaction_dao)
 
     context.user_account_with_tx = create_user_account(context)
+    # cash holding account
+    context.cash_holding_account = create_admin_account(context, prefix='CASH', balance=100)
 
-    account_id = context.user1_account_with_tx.id
+    # cash disbursement account
+    context.cash_disbursement_account = create_admin_account(context, prefix='DISB', balance=100)
+
     context.transactions = [
-        transaction_service.create_deposit_transaction(context.db_session, amount=10, destination_account_id=account_id),
-        transaction_service.create_withdrawal(context.db_session, amount=5, source_account_id=account_id)
+        transaction_service.create_deposit_transaction(context.db_session, amount=10, source_account_id=context.cash_holding_account.id,
+                                                       destination_account_id=context.user_account_with_tx.id),
+        transaction_service.create_withdrawal(context.db_session, amount=5, source_account_id=context.user_account_with_tx.id,
+                                              destination_account_id=context.cash_disbursement_account.id),
     ]
+    context.db_session.commit()
 
 
 @when('I make a deposit with amount "{amount:d}"')
@@ -142,7 +156,6 @@ def step_send_deposit_request(context, amount):
 
     logger.info(f"Response status: {context.response.status_code}")
     logger.info(f"Response body: {context.response.json()}")
-
 
     context.db_session.refresh(context.user1_account)
     context.db_session.refresh(context.cash_holding_account)
@@ -171,18 +184,38 @@ def step_send_deposit_request(context, amount):
 
 @when('I make a withdraw with amount "{amount:d}"')
 def step_send_withdraw_request(context, amount):
-    context.transaction_data = {"amount": amount, 
+    context.transaction_data = {"amount": amount,
                                 "source_account_id": context.user1_account.id,
                                 "destination_account_id": context.cash_disbursement_account.id
                                 }
     context.response = context.client.post("/api/v1/transactions/withdraw", json=context.transaction_data)
 
 
-@when('I make a transfer with amount "{amount:d}", source_account_id "{source_account_id:d}", and destination_account_id "{dest_account_id:d}"')
-def step_send_transfer_request(context, amount, source_account_id, dest_account_id):
+@when('I make a withdraw with amount "{amount:d}" from an account that does not exist')
+def step_send_withdraw_request(context, amount):
+    invalid_account_id = 999999
+    context.transaction_data = {"amount": amount,
+                                "source_account_id": invalid_account_id,
+                                "destination_account_id": context.cash_disbursement_account.id
+                                }
+    context.response = context.client.post("/api/v1/transactions/withdraw", json=context.transaction_data)
+
+
+@when('I make a transfer with amount "{amount:d}" from the source account to the destination account')
+def step_send_transfer_request(context, amount):
     context.transaction_data = {
         "amount": amount,
         "source_account_id": context.source_account.id,
+        "destination_account_id": context.destination_account.id
+    }
+    context.response = context.client.post("/api/v1/transactions/transfer", json=context.transaction_data)
+
+
+@when('I make a transfer with amount "{amount:d}" from the invalid source account to the destination account')
+def step_send_transfer_request(context, amount):
+    context.transaction_data = {
+        "amount": amount,
+        "source_account_id": context.invalid_source_account,
         "destination_account_id": context.destination_account.id
     }
     context.response = context.client.post("/api/v1/transactions/transfer", json=context.transaction_data)
@@ -233,7 +266,6 @@ def step_check_specific_error_message(context, error_type):
         f"Expected one of {expected_messages} in '{error_message}'"
 
 
-
 @then('the cash holding account balance should be {balance:d}')
 def step_check_admin_balance(context, balance):
     context.db_session.refresh(context.cash_holding_account)
@@ -248,11 +280,18 @@ def step_check_first_user_balance(context, balance):
         f"Expected balance {balance}, got {context.user1_account.balance}"
 
 
-@then('the second user account balance should be {balance:d}')
+@then('the source account balance should be {balance:d}')
+def step_check_first_user_balance(context, balance):
+    context.db_session.refresh(context.source_account)
+    assert context.source_account.balance == Decimal(str(balance)), \
+        f"Expected balance {balance}, got {context.source_account.balance}"
+
+
+@then('the destination account balance should be {balance:d}')
 def step_check_second_user_balance(context, balance):
-    context.db_session.refresh(context.second_user_account)
-    assert context.second_user_account.balance == Decimal(str(balance)), \
-        f"Expected balance {balance}, got {context.second_user_account.balance}"
+    context.db_session.refresh(context.destination_account)
+    assert context.destination_account.balance == Decimal(str(balance)), \
+        f"Expected balance {balance}, got {context.destination_account.balance}"
 
 
 @then('the response should contain a list of transactions for account {account_id:d}')
