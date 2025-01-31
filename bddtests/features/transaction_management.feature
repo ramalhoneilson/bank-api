@@ -9,18 +9,19 @@ Feature: Transaction Management
         And the user account balance should be 150
         And the cash holding account balance should be 9950
 
-    # Scenario: Deposit Funds - Account Not Found
-    #     Given I have cash holding account with balance of 10000
-    #     When I make a deposit with amount "50"
-    #     Then the response status code should be 404
-    #     And the response should contain an "Account not found" error message
+    Scenario: Deposit Funds - Account Not Found
+        Given I have cash holding account with balance of 10000
+        When I make a deposit with amount "50" to an account that does not exist
+        Then the response status code should be 404
+        And the response should contain an "not found" error message
 
-    # Scenario: Withdraw Funds Successfully
-    #     Given I have a user with an account balance of 100
-    #     When I make a withdraw with amount "50"
-    #     Then the response status code should be 200
-    #     And the response should contain the withdrawal transaction details
-    #     And the user account balance should be 50
+    Scenario: Withdraw Funds Successfully
+        Given I have a user with an account balance of 100
+        And I have cash disbursement account with balance of 1000
+        When I make a withdraw with amount "50"
+        Then the response status code should be 200
+        And the response should contain the withdrawal transaction details
+        And the user account balance should be 50
 
     # Scenario: Withdraw Funds - Insufficient Funds
     #     Given I have a user with an account balance of 100

@@ -97,6 +97,7 @@ def step_setup_cash_holding_account(context, balance):
 @given('I have cash disbursement account with balance of {balance:d}')
 def step_setup_admin_account(context, balance):
     context.cash_disbursement_account = create_admin_account(context, prefix='DISB', balance=balance)
+    context.db_session.commit()
 
 
 @given('I have a source account with a balance of {source_balance:d} and a destination account with balance of {dest_balance:d}')
@@ -123,9 +124,7 @@ def step_setup_transactions(context):
 
 @when('I make a deposit with amount "{amount:d}"')
 def step_send_deposit_request(context, amount):
-    logger.info(f"Making a deposit of {amount} to account {context.user1_account.id}")
 
-    # Debug: Check account existence and state
     user_account = context.db_session.query(BankAccount).get(context.user1_account.id)
     logger.info(f"User account state: {user_account and user_account.balance}")
 
@@ -141,14 +140,33 @@ def step_send_deposit_request(context, amount):
     # Make the request
     context.response = context.client.post("/api/v1/transactions/deposit", json=context.transaction_data)
 
-    # Debug: Log response
     logger.info(f"Response status: {context.response.status_code}")
     logger.info(f"Response body: {context.response.json()}")
 
-    # Refresh the session to ensure we have latest state
+
     context.db_session.refresh(context.user1_account)
     context.db_session.refresh(context.cash_holding_account)
 
+
+@when('I make a deposit with amount "{amount:d}" to an account that does not exist')
+def step_send_deposit_request(context, amount):
+    invalid_account_id = 999999
+    cash_account = context.db_session.query(BankAccount).get(context.cash_holding_account.id)
+    logger.info(f"Cash account state: {cash_account and cash_account.balance}")
+
+    context.transaction_data = {
+        "amount": amount,
+        "source_account_id": context.cash_holding_account.id,
+        "destination_account_id": invalid_account_id
+    }
+
+    # Make the request
+    context.response = context.client.post("/api/v1/transactions/deposit", json=context.transaction_data)
+
+    logger.info(f"Response status: {context.response.status_code}")
+    logger.info(f"Response body: {context.response.json()}")
+
+    context.db_session.refresh(context.cash_holding_account)
 
 
 @when('I make a withdraw with amount "{amount:d}"')
