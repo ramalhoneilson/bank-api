@@ -15,6 +15,12 @@ from decimal import Decimal
 from api.config.config import CASH_HOLDING_ACCOUNT_ID, CASH_DISBURSEMENT_ACCOUNT_ID
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler = logging.FileHandler('./transaction_management_steps.log')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
 
 
 def generate_account_number(prefix='U'):
@@ -23,7 +29,7 @@ def generate_account_number(prefix='U'):
 
 
 def create_user_account(context, balance=0) -> BankAccount:
-    """Helper function to create a user account."""
+    """Helper function to create a user account"""
     account = BankAccount(
         account_number=generate_account_number(),
         account_type=AccountType.USER,
@@ -31,16 +37,14 @@ def create_user_account(context, balance=0) -> BankAccount:
         balance=Decimal(str(balance))
     )
     context.db_session.add(account)
-    context.db_session.commit()
-    context.db_session.refresh(account)
+    context.db_session.flush()
     logger.info(f"User account created: {account.id}")
     return account
 
 
-def create_admin_account(context, account_id, prefix ='A', balance=0):
-    """Helper function to create an administrative account."""
+def create_admin_account(context, prefix='A', balance=0):
+    """Helper function to create an administrative account"""
     account = BankAccount(
-        id=account_id,
         account_number=generate_account_number(prefix),
         account_type=AccountType.ADMINISTRATIVE,
         status=AccountStatus.ACTIVE,
@@ -48,57 +52,57 @@ def create_admin_account(context, account_id, prefix ='A', balance=0):
         administrative_entity_id=1
     )
     context.db_session.add(account)
-    context.db_session.commit()
-    context.db_session.refresh(account)
+    context.db_session.flush()
+    logger.info(f"Admin account created: {account.id}")
     return account
 
 
 @given('I have a user with an account balance of {balance:d}')
 def step_setup_accounts(context, balance=0):
-    context.user1_account = create_user_account(context)
-    context.user1_account.balance = Decimal(str(balance))
-    context.db_session.commit()
-    context.db_session.refresh(context.user1_account)
-    logger.info(f"User account created: {context.user1_account.id}")
+    """Create a user account with specified balance"""
+    try:
+        context.user1_account = create_user_account(context, balance)
+        account = context.db_session.query(BankAccount).filter(
+            BankAccount.id == context.user1_account.id
+        ).first()
+        assert account is not None, f"Failed to create user account with ID {context.user1_account.id}"
+        logger.info(f"User account created and verified: {context.user1_account.id}")
+
+        context.db_session.commit()
+    except Exception as e:
+        context.db_session.rollback()
+        logger.error(f"Error creating user account: {e}")
+        raise
+
 
 @given('I have cash holding account with balance of {balance:d}')
+def step_setup_cash_holding_account(context, balance):
+    """Create cash holding account with specified balance"""
+    try:
+        context.cash_holding_account = create_admin_account(context, prefix='CASH', balance=balance)
+
+        account = context.db_session.query(BankAccount).filter(
+            BankAccount.id == context.cash_holding_account.id
+        ).first()
+        assert account is not None, f"Failed to create cash holding account with ID {context.cash_holding_account.id}"
+        logger.info(f"Cash holding account created and verified: {context.cash_holding_account.id}")
+
+        context.db_session.commit()
+    except Exception as e:
+        context.db_session.rollback()
+        logger.error(f"Error creating cash holding account: {e}")
+        raise
+
+
+@given('I have cash disbursement account with balance of {balance:d}')
 def step_setup_admin_account(context, balance):
-    # first check with the account with CASH_HOLDING_ACCOUNT_ID exists
-    context.cash_holding_account = context.db_session.query(BankAccount).filter(BankAccount.id == CASH_HOLDING_ACCOUNT_ID).first()
-    if context.cash_holding_account:
-        context.cash_holding_account.balance = Decimal(str(balance))
-    else:
-        context.cash_holding_account = create_admin_account(context, account_id=CASH_HOLDING_ACCOUNT_ID, prefix='CASH', balance=balance)
-    context.db_session.commit()
-    context.db_session.refresh(context.cash_holding_account)
-
-
-@then('the user account balance should be {balance:d}')
-def step_check_user_balance(context, balance):
-    context.db_session.refresh(context.user1_account)
-    assert context.user1_account.balance == Decimal(str(balance)), f"Expected balance {balance}, got {context.user1_account.balance}"
-
-@given('I have cash disbursement account')
-def step_setup_admin_account(context):
-    context.cash_disbursement_account = create_admin_account(context, account_id=2, prefix='DISB', balance=0)
-
-
-@given('the administrative account has a balance of {balance:d}')
-def step_set_admin_balance(context, balance):
-    context.admin_account.balance = Decimal(str(balance))
-    context.db_session.commit()
-    context.db_session.refresh(context.admin_account)
+    context.cash_disbursement_account = create_admin_account(context, prefix='DISB', balance=balance)
 
 
 @given('I have a source account with a balance of {source_balance:d} and a destination account with balance of {dest_balance:d}')
 def step_setup_source_and_destination_accounts(context, source_balance, dest_balance):
     context.source_account = create_user_account(context, balance=source_balance)
     context.destination_account = create_user_account(context, balance=dest_balance)
-
-
-@given('I have another user account with balance of {balance:d}')
-def step_setup_second_account(context, balance):
-    context.second_user_account = create_user_account(context, balance=balance, customer_id=2)
 
 
 @given('I have a user account with some transactions')
@@ -109,7 +113,6 @@ def step_setup_transactions(context):
     transaction_service = TransactionService(account_service, transaction_dao)
 
     context.user_account_with_tx = create_user_account(context)
-    admin_account = create_admin_account(context, balance=1000)
 
     account_id = context.user1_account_with_tx.id
     context.transactions = [
@@ -120,20 +123,40 @@ def step_setup_transactions(context):
 
 @when('I make a deposit with amount "{amount:d}"')
 def step_send_deposit_request(context, amount):
+    logger.info(f"Making a deposit of {amount} to account {context.user1_account.id}")
+
+    # Debug: Check account existence and state
+    user_account = context.db_session.query(BankAccount).get(context.user1_account.id)
+    logger.info(f"User account state: {user_account and user_account.balance}")
+
+    cash_account = context.db_session.query(BankAccount).get(context.cash_holding_account.id)
+    logger.info(f"Cash account state: {cash_account and cash_account.balance}")
+
     context.transaction_data = {
         "amount": amount,
-        "account_id": context.cash_holding_account.id,
-        "source_account_id": context.user1_account.id
+        "source_account_id": context.cash_holding_account.id,
+        "destination_account_id": context.user1_account.id
     }
-    logger.info(f"Transaction data: {context.transaction_data}")
+
+    # Make the request
     context.response = context.client.post("/api/v1/transactions/deposit", json=context.transaction_data)
-    logger.info(f"Response: {context.response.json()}")
+
+    # Debug: Log response
+    logger.info(f"Response status: {context.response.status_code}")
+    logger.info(f"Response body: {context.response.json()}")
+
+    # Refresh the session to ensure we have latest state
+    context.db_session.refresh(context.user1_account)
+    context.db_session.refresh(context.cash_holding_account)
 
 
 
 @when('I make a withdraw with amount "{amount:d}"')
 def step_send_withdraw_request(context, amount):
-    context.transaction_data = {"amount": amount, "account_id": context.user1_account.id}
+    context.transaction_data = {"amount": amount, 
+                                "source_account_id": context.user1_account.id,
+                                "destination_account_id": context.cash_disbursement_account.id
+                                }
     context.response = context.client.post("/api/v1/transactions/withdraw", json=context.transaction_data)
 
 
@@ -152,7 +175,7 @@ def step_check_deposit_response(context):
     response_data = context.response.json()
     assert response_data['transaction_type'] == TransactionType.DEPOSIT.value, f"Transaction type should be DEPOSIT but got {response_data['transaction_type']}"
     assert response_data['amount'] == float(context.transaction_data['amount']), f"Amount mismatch. Expected {context.transaction_data['amount']} but got {response_data['amount']}"
-    assert response_data['destination_account_id'] == context.transaction_data['account_id'], "Destination account mismatch"
+    assert response_data['destination_account_id'] == context.transaction_data['destination_account_id'], "Destination account mismatch"
     assert 'id' in response_data
     assert 'timestamp' in response_data
 
@@ -162,7 +185,7 @@ def step_check_withdrawal_response(context):
     response_data = context.response.json()
     assert response_data['transaction_type'] == TransactionType.WITHDRAW.value, f"Transaction type should be WITHDRAW but got {response_data['transaction_type']}"
     assert response_data['amount'] == float(context.transaction_data['amount'])
-    assert response_data['source_account_id'] == context.transaction_data['account_id']
+    assert response_data['source_account_id'] == context.transaction_data['source_account_id']
     assert 'id' in response_data
     assert 'timestamp' in response_data
 
@@ -193,14 +216,14 @@ def step_check_specific_error_message(context, error_type):
 
 
 
-@then('the administrative account balance should be {balance:d}')
+@then('the cash holding account balance should be {balance:d}')
 def step_check_admin_balance(context, balance):
-    context.db_session.refresh(context.admin_account)
-    assert context.admin_account.balance == Decimal(str(balance)), \
-        f"Expected balance {balance}, got {context.admin_account.balance}"
+    context.db_session.refresh(context.cash_holding_account)
+    assert context.cash_holding_account.balance == Decimal(str(balance)), \
+        f"Expected balance {balance}, got {context.cash_holding_account.balance}"
 
 
-@then('the first user account balance should be {balance:d}')
+@then('the user account balance should be {balance:d}')
 def step_check_first_user_balance(context, balance):
     context.db_session.refresh(context.user1_account)
     assert context.user1_account.balance == Decimal(str(balance)), \

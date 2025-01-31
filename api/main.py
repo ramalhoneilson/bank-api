@@ -11,11 +11,6 @@ from api.models.customer import Customer  # noqa
 
 logger = logging.getLogger(__name__)
 
-
-logger.info("Creating database tables...")
-Base.metadata.create_all(bind=engine)
-logger.info("Database tables created successfully.")
-
 api = FastAPI(
     title="Banking App API",
     description="REST API for Bank Account Management",

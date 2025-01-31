@@ -27,7 +27,8 @@ def deposit_funds(deposit_data: DepositCreate, db: Session = Depends(get_db)):
         transaction = transaction_service.create_deposit_transaction(
             db=db,
             amount=deposit_data.amount,
-            destination_account_id=deposit_data.account_id
+            source_account_id=deposit_data.source_account_id,
+            destination_account_id=deposit_data.destination_account_id
         )
 
         db.refresh(transaction)
@@ -70,7 +71,8 @@ def withdraw_funds(withdraw_data: WithdrawCreate, db: Session = Depends(get_db))
         transaction = transaction_service.create_withdrawal(
             db,
             amount=withdraw_data.amount,
-            source_account_id=withdraw_data.account_id,
+            source_account_id=withdraw_data.source_account_id,
+            destination_account_id=withdraw_data.destination_account_id
         )
 
         return TransactionResponse(

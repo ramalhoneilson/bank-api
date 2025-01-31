@@ -17,9 +17,12 @@ DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 
 # if dev, we use sqlite
-if ENVIRONMENT == "dev":
-    DATABASE_URL = "sqlite:///./test.db"    
+if ENVIRONMENT == "local":
+    DATABASE_URL = "sqlite:///:memory:"
+elif ENVIRONMENT == "test":
+    DATABASE_URL = "sqlite:///./test.db"
 else:
+    # integration, qa, prod
     DATABASE_URL = f"postgresql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
 print(f"DB URL: {DATABASE_URL}")
 

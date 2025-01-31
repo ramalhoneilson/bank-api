@@ -1,113 +1,83 @@
-from fastapi.testclient import TestClient
-from api.main import api
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from api.database.base import Base
-from api.models.customer import Customer
-from api.models.administrative_entity import AdministrativeEntity
-from api.models.bank_account import BankAccount, AccountType, AccountStatus
-from decimal import Decimal
 import logging
 import os
 
-logger = logging.getLogger(__name__)
+os.environ["ENVIRONMENT"] = "local"
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+from api.main import api
+from api.database.session import get_db
+from api.database.base import Base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from fastapi.testclient import TestClient
+
+
+logger = logging.getLogger(__name__)
+# create a file based database to run tests
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
+
+# Create test session factory
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def override_get_db():
+    try:
+        db = TestingSessionLocal()
+        yield db
+    finally:
+        db.close()
 
 
 def before_all(context):
-    """Initialize FastAPI test client and ensure the database is clean."""
-    if os.path.exists("test.db"):
-        try:
-            os.remove("test.db")
-            logger.debug("Existing test database deleted.")
-        except Exception as e:
-            logger.error(f"Error deleting test database: {e}")
-
-    context.client = TestClient(api)
-
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL,
-        connect_args={"check_same_thread": False}
-    )
+    """Initialize test environment before all tests."""
+    # Create all tables in the test database
+    Base.metadata.drop_all(bind=engine)  # Ensure clean state
     Base.metadata.create_all(bind=engine)
-    logger.debug("New test database created.")
+
+    # Override the database dependency
+    api.dependency_overrides[get_db] = override_get_db
+
+    # Create test client
+    context.client = TestClient(api)
+    logger.info("Test environment initialized with in-memory database")
 
 
 def before_scenario(context, scenario):
-    """Initialize database and test data before each scenario."""
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL,
-        connect_args={"check_same_thread": False}
-    )
-    Base.metadata.create_all(bind=engine)
-
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    """Set up fresh database session for each scenario."""
     context.db_session = TestingSessionLocal()
 
+    # Set up initial test data
     setup_test_data(context.db_session)
-    logger.debug("Test data set up for scenario.")
+    context.db_session.commit()
+    logger.info(f"Database prepared for scenario: {scenario.name}")
 
 
 def after_scenario(context, scenario):
     """Clean up after each scenario."""
     if hasattr(context, 'db_session'):
         context.db_session.close()
-        logger.debug("Database session closed.")
-
-    # Delete the SQLite database file to ensure a clean state for the next scenario
-    if os.path.exists("test.db"):
-        try:
-            os.remove("test.db")
-            logger.debug("Test database deleted after scenario.")
-        except Exception as e:
-            logger.error(f"Error deleting test database after scenario: {e}")
+    logger.info(f"Cleanup completed for scenario: {scenario.name}")
 
 
 def setup_test_data(db_session):
-    """some basic test data"""
+    """Set up initial test data needed for all scenarios."""
+    from api.models.administrative_entity import AdministrativeEntity
+
     try:
-        customer1 = Customer(
-            customer_name="Test Customer 1"
-        )
-        db_session.add(customer1)
-
-        customer2 = Customer(
-            customer_name="test2@example.com"
-        )
-        db_session.add(customer2)
-
+        # Create administrative entity
         admin_entity = AdministrativeEntity(
-            corporate_name="Test Admin Entity"
+            corporate_name="Test Admin Entity",
+            tax_id="1234567890"
         )
         db_session.add(admin_entity)
-
-        # Create cash holding account
-        cash_account = BankAccount(
-            account_number="CASH-001",
-            account_type=AccountType.ADMINISTRATIVE,
-            status=AccountStatus.ACTIVE,
-            balance=Decimal('1000000'),
-            administrative_entity_id=1
-        )
-        db_session.add(cash_account)
-
-        # Create cash disbursement account
-        disbursement_account = BankAccount(
-            account_number="CASH-002",
-            account_type=AccountType.ADMINISTRATIVE,
-            status=AccountStatus.ACTIVE,
-            balance=Decimal('0'),
-            administrative_entity_id=1
-        )
-        db_session.add(disbursement_account)
-
-        db_session.commit()
-        logger.debug("Test data created successfully.")
-
+        db_session.flush()
+        logger.info("Initial test data setup completed")
+        return admin_entity
     except Exception as e:
         db_session.rollback()
-        logger.error(f"Error setting up test data: {e}")
-
-    finally:
-        db_session.expire_all()
+        logger.error(f"Error in test data setup: {e}")
+        raise

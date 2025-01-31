@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from api.models.bank_account import BankAccount
+from api.models.bank_account import AccountType, BankAccount
 from api.models.transaction import Transaction, TransactionType
 from api.schemas.transaction_schema import TransactionResponse
 from api.utils.exceptions import InsufficientFundsError, AccountNotFoundError
@@ -20,62 +20,79 @@ class TransactionService:
         self.bank_account_service = bank_account_service
         self.transaction_dao = transaction_dao
 
+    
     def create_deposit_transaction(
         self,
         db: Session,
         amount: Decimal,
+        source_account_id: int = None,
         destination_account_id: int = None,
     ) -> Transaction:
         """
         Creates a deposit transaction with thread safety and validation logic.
-        For deposits, the source account is the cash holding account (administrative_entity) and the destination account is the user account.
+        For deposits, the source account is the cash holding account and the destination account is the user account.
         """
         try:
             if not destination_account_id:
                 raise ValueError("Destination account is required for deposits.")
-            
+
             logger.info(f"Processing deposit: {amount} to account: {destination_account_id}")
-            
+
             amount_decimal = Decimal(str(amount))
-            
+
             if amount_decimal <= 0:
                 raise ValueError("Amount must be positive.")
 
+            # Get and validate destination account (user account)
             destination_account = self._get_and_lock_account(db, destination_account_id)
             if not destination_account:
-                raise AccountNotFoundError("Destination account not found.")
+                raise AccountNotFoundError(f"Destination account {destination_account_id} not found.")
+            if destination_account.account_type != AccountType.USER:
+                raise ValueError("Destination account needs to be a user account.")
             logger.info(f"Destination account found: {destination_account.id}")
 
-            cash_holding_account = self._get_and_lock_account(db, CASH_HOLDING_ACCOUNT_ID)
+            # Get and validate source account (cash holding account)
+            cash_holding_account = self._get_and_lock_account(db, source_account_id)
             if not cash_holding_account:
-                raise AccountNotFoundError("Cash Holding Account not found.")
+                raise AccountNotFoundError(f"Cash Holding Account {source_account_id} not found.")
+            if cash_holding_account.account_type != AccountType.ADMINISTRATIVE:
+                raise ValueError("Source account must be an administrative account.")
             logger.info(f"Cash holding account found: {cash_holding_account.id}")
-            logger.info(f"Cash holding account balance: {cash_holding_account.balance}")
-            logger.info(f"Amount to deposit: {amount}")
-            logger.info(f"Destination account balance before the transfer: {destination_account.balance}")
+
+            # Check sufficient funds
+            if cash_holding_account.balance < amount_decimal:
+                raise InsufficientFundsError("Insufficient funds in cash holding account.")
+
+            # Perform the transfer
+            logger.info(f"Cash holding account balance before transfer: {cash_holding_account.balance}")
+            logger.info(f"Destination account balance before transfer: {destination_account.balance}")
+
             cash_holding_account.balance -= amount_decimal
             destination_account.balance += amount_decimal
-            logger.info(f"Destination account balance after the transfer: {destination_account.balance}")
 
+            logger.info(f"Cash holding account balance after transfer: {cash_holding_account.balance}")
+            logger.info(f"Destination account balance after transfer: {destination_account.balance}")
+
+            # Create and save transaction
             transaction = Transaction(
-                amount=amount,
+                amount=amount_decimal,
                 transaction_type=TransactionType.DEPOSIT,
                 source_account_id=cash_holding_account.id,
-                destination_account_id=destination_account_id,
+                destination_account_id=destination_account.id,
             )
             db.add(transaction)
             db.commit()
             db.refresh(transaction)
 
             logger.info(f"Deposit transaction created: {transaction.id}")
-            # summarize in the logs the transaction details
-            logger.info(f"Transaction details: {transaction}")
-            
             return transaction
+
         except Exception as e:
             db.rollback()
             logger.error(f"Error during deposit transaction: {e}")
-            raise e
+            raise
+
+
 
     def create_transfer(
         self,
@@ -129,6 +146,7 @@ class TransactionService:
         db: Session,
         amount: Decimal,
         source_account_id: int = None,
+        destination_account_id: int = None,
     ) -> Transaction:
         """
         Create a new withdrawal transaction with thread safety and validation logic.
@@ -149,10 +167,12 @@ class TransactionService:
             if source_account.balance < amount_decimal:
                 raise InsufficientFundsError("Insufficient funds in the source account.")
 
-            cash_disbursement_account = self._get_and_lock_account(db, CASH_DISBURSEMENT_ACCOUNT_ID)
+            cash_disbursement_account = self._get_and_lock_account(db, destination_account_id)
             if not cash_disbursement_account:
                 raise AccountNotFoundError("Cash Disbursement Account not found.")
-
+            if cash_disbursement_account.account_type != AccountType.ADMINISTRATIVE:
+                raise ValueError("Destination account must be an ADMINISTRATIVE account.")
+            
             source_account.balance -= amount_decimal
             cash_disbursement_account.balance += amount_decimal
 
@@ -181,7 +201,7 @@ class TransactionService:
         account = db.execute(
             select(BankAccount)
             .where(BankAccount.id == account_id)
-            .with_for_update()  # This ensures proper locking
+            .with_for_update()
         ).scalar_one_or_none()
 
         if not account:
