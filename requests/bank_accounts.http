@@ -4,7 +4,6 @@ Content-Type: application/json
 
 {
   "owner_id": 1,
-  "account_number": "CASH_HOLDNING",
   "balance": 120000.00,
   "account_type": "ADMINISTRATIVE",
   "status": "ACTIVE"
@@ -16,7 +15,6 @@ Content-Type: application/json
 
 {
   "owner_id": 1,
-  "account_number": "CASH_DISBURSEMENT",
   "balance": 120000.00,
   "account_type": "ADMINISTRATIVE",
   "status": "ACTIVE"

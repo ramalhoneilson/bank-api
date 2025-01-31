@@ -21,13 +21,12 @@ if ENVIRONMENT == "dev":
     DATABASE_URL = "sqlite:///./test.db"    
 else:
     DATABASE_URL = f"postgresql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
-print(f"Connecting to database: {DATABASE_URL}")
-logger.info(f"Connecting to database: {DATABASE_URL}")
+print(f"DB URL: {DATABASE_URL}")
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 
 # I am keeping these as environment variables just to simplify the service.
 # In a real-world scenario, these would be configured in the database.
-CASH_HOLDING_ACCOUNT_ID = int(os.getenv('CASH_HOLDING_ACCOUNT_ID', '1'))
-CASH_DISBURSEMENT_ACCOUNT_ID = int(os.getenv('CASH_DISBURSEMENT_ACCOUNT_ID', '2'))
+CASH_HOLDING_ACCOUNT_ID = int(os.getenv('CASH_HOLDING_ACCOUNT_ID', '999999999999'))
+CASH_DISBURSEMENT_ACCOUNT_ID = int(os.getenv('CASH_DISBURSEMENT_ACCOUNT_ID', '999999999998'))

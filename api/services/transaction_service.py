@@ -50,9 +50,12 @@ class TransactionService:
             if not cash_holding_account:
                 raise AccountNotFoundError("Cash Holding Account not found.")
             logger.info(f"Cash holding account found: {cash_holding_account.id}")
-
+            logger.info(f"Cash holding account balance: {cash_holding_account.balance}")
+            logger.info(f"Amount to deposit: {amount}")
+            logger.info(f"Destination account balance before the transfer: {destination_account.balance}")
             cash_holding_account.balance -= amount_decimal
             destination_account.balance += amount_decimal
+            logger.info(f"Destination account balance after the transfer: {destination_account.balance}")
 
             transaction = Transaction(
                 amount=amount,
@@ -65,6 +68,9 @@ class TransactionService:
             db.refresh(transaction)
 
             logger.info(f"Deposit transaction created: {transaction.id}")
+            # summarize in the logs the transaction details
+            logger.info(f"Transaction details: {transaction}")
+            
             return transaction
         except Exception as e:
             db.rollback()

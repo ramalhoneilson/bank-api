@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from api.config.config import DATABASE_URL
+from api.config.config import DATABASE_URL, ENVIRONMENT
 
 print(f"Connecting to database: {DATABASE_URL}")
 
