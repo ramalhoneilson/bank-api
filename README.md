@@ -1,4 +1,9 @@
- Decisions
+# Overview
+This is a sample web application that implements a few endpoinds related to a backend banking app. 
+The main use cases are deposit, transfers and withdraw. The API is backed by the Python framework FastAPI. The idea is to have a template with a few design patterns that can be used for a simple backend solution designed in Python. In this solution, I use an ORM framework (SQLAlchemy), BDD testing with behave, unit testing with PyTest, data validation with Pydantic and so on.
+For the money transfer parts, we take care of things such as concurrency with row-based locking.
+
+## Design decisions
 1. I decided to create an administrative entity to represent the bank itself. This entity is the owner of administrative accounts, i.e., accounts from which we take money or deposit money to. These accounts are important because of reporting and tracking purposes.
 Also because money cannot be simply created or destroyed. It must come from somewhere and go to somewhere.
 2. The money movement parts are thread safe and I lock on the account.
